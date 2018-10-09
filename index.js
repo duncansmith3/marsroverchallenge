@@ -1,7 +1,6 @@
 const readline = require('readline');
 const TerminalInput = require('./lib/terminalInput');
 const FileReader = require('./lib/filereader');
-const WebServer = require('./lib/webserver');
 const MarsMap = require('./lib/map');
 const Rover = require('./lib/rover');
 const Logger = require('./lib/logger');
@@ -9,9 +8,9 @@ const Logger = require('./lib/logger');
 let logger = new Logger('INFO', module.parent);
 
 function App(opts) {
+  logger.always("Mars rover challenge 0.0.1\n");
   this.terminal = new TerminalInput();
   this.fileReader = new FileReader();
-  this.server = new WebServer();
 
   this.marsMap = null;
   this.rovers = [];
@@ -30,6 +29,8 @@ function App(opts) {
     }
   });
 
+  this.attachListeners();
+
   if (opts.isParent) {
     this.args = this.processArguments(process.argv.slice(2)) || [];
     if (this.args.verbose) {
@@ -42,15 +43,12 @@ function App(opts) {
       this.displayOptions();
       process.exit();
     }
-    else if (!this.args.file && !this.args.web) {
-      this.terminal.captureInput();
-    }
     else if (this.args.file) {
       this.fileReader.processFromFile(this.args.file)
         .catch();
     }
-    else if (this.args.web) {
-      this.server.start(this.args.host, this.args.port);
+    else {
+      this.terminal.captureInput();
     }
   }
 
@@ -61,22 +59,21 @@ function App(opts) {
 App.prototype = {
   constructor: App,
   attachListeners: function() {
-    this.terminal.on('startServer', () => this.server.start());
-    ['terminal', 'fileReader', 'server'].forEach(logConsumer => {
+    ['terminal', 'fileReader'].forEach(logConsumer => {
       this[logConsumer].on('message.trace', function() {
-        logger.trace.apply(null, Array.prototype.slice.call(arguments));
+        logger.trace.apply(logger, Array.prototype.slice.call(arguments));
       });
       this[logConsumer].on('message.debug', function() {
-        logger.debug.apply(null, Array.prototype.slice.call(arguments));
+        logger.debug.apply(logger, Array.prototype.slice.call(arguments));
       });
       this[logConsumer].on('message.info', function() {
-        logger.info.apply(null, Array.prototype.slice.call(arguments));
+        logger.info.apply(logger, Array.prototype.slice.call(arguments));
       });
       this[logConsumer].on('message.warn', function() {
-        logger.warn.apply(null, Array.prototype.slice.call(arguments));
+        logger.warn.apply(logger, Array.prototype.slice.call(arguments));
       });
       this[logConsumer].on('message.error', function() {
-        logger.error.apply(null, Array.prototype.slice.call(arguments));
+        logger.error.apply(logger, Array.prototype.slice.call(arguments));
       });
       this[logConsumer].on('message.always', function(msg) {
         logger.always(msg);
@@ -88,18 +85,6 @@ App.prototype = {
       '-help': {
         key: 'h',
         expected: 'boolean'
-      },
-      '-web': {
-        key: 'web',
-        expected: 'boolean'
-      },
-      '-host': {
-        key: 'host',
-        expected: 'text'
-      },
-      '-port': {
-        key: 'port',
-        expected: 'number'
       },
       '-file': {
         key: 'file',
@@ -229,13 +214,9 @@ Mars rover challenge. See https://code.google.com/archive/p/marsrovertechchallen
 Provide input of the form blah blah blah
 
 Usage: node index [OPTION]...
-Example: node index --web --host=192.168.8.1 --port=8080
-         node index --file=./roverinstructions.txt
+Example: node index --file=./roverinstructions.txt
 
 Options:
-  --web			Start a web UI for challenge. Allows users to view movements and/or provide input to the application.
-  --host=hostname	Bind the webserver to hostname (defaults to localhost). Requires the web UI option.
-  --port=port		Bind the webserver to a specific port (defaults to a random unused port >50000). Requires the web UI option.
   --file=filepath	Use the file at location \`filepath\` as input to the application. Files should be UTF-8 formatted.
   --verbose		Extra logging. Think trace loglevel.
 
@@ -312,7 +293,6 @@ Report bugs to https://github.com/duncansmith3/marsroverchallenge.
 let app = new App({isParent: !module.parent});
 
 (function AttachListeners() {
-  app.attachListeners();
   ['terminal', 'fileReader'].forEach(gatherer => {
     this[gatherer].on('input', async (input) => {
       try {
