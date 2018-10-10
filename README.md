@@ -1,6 +1,7 @@
 # Mars Rover Challenge
 My NodeJS attempt at the Mars rover challenge. See https://code.google.com/archive/p/marsrovertechchallenge/ for more information.
 
+It is assumed that rovers can fall off the plateau or crash into one another, rendering themselves useless. Once a rover has been involved in an accident, it stops functioning and cannot move any longer.
 ## Installation
 Requires NodeJS 8+. Simply clone this repository and run
 ```sh
