@@ -51,4 +51,4 @@ $ npm test
 ```
 
 ## Todo
-* implement a web ui to view the results of and submit rover instructions.
+* implement a web ui to view the results of - and submit additional - rover instructions.
